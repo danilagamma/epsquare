@@ -1,0 +1,6 @@
+{application, epsquare, [
+    {description, "Erlang implementation of P-Square algorithm"},
+    {vsn, git},
+    {registered, []},
+    {applications, [kernel, stdlib]}
+]}.
