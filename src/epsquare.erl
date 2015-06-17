@@ -38,20 +38,23 @@
 %% @doc Initialize state with 5 observations
 %%
 -spec init([number()], float()) -> state().
-init([_, _, _, _, _] = Values, P) ->
+init([_, _, _, _, _] = Values, [P1, P2, P3])
+  when 1 > P3, P3 > P2, P2 > P1, P1 > 0 ->
     [V1, V2, V3, V4, V5] = lists:sort(Values),
     {
-        {V1,        V2,        V3,          V4, V5},
-        { 1,         2,         3,           4,  5},
-        { 1, 1 + 2 * P, 1 + 4 * P,   3 + 2 * P,  5},
-        { 0,     P / 2,         P, (1 + P) / 2,  1}
-    }.
+        {V1,        V2,          V3,          V4, V5},
+        { 1,         2,           3,           4,  5},
+        { 1, 1 + 4 * P1, 1 + 4 * P2,  1 + 4 * P3,  5},
+        { 0,         P1,         P2,          P3,  1}
+    };
+init(Values, P) when P > 0, P < 1 ->
+    init(Values, [P / 2, P, (1 + P) / 2]).
 
-%% @doc Get current percentile value from state
+%% @doc Get current percentile values from state
 %%
--spec perc(state()) -> number().
-perc({{_, _, V3, _, _}, _, _, _}) ->
-    V3.
+-spec perc(state()) -> [{float(), number()}].
+perc({{_, V1, V2, V3, _}, _, _, {_, P1, P2, P3, _}}) ->
+    [{P1, V1}, {P2, V2}, {P3, V3}].
 
 %% @doc Update state with new observation
 %%
@@ -93,7 +96,7 @@ fit(V, {_V1, V2, V3, V4, V5} = H) ->
 
 -define(E(I, V), (element(I, V))).
 
-adjust(I, {H, N, Nh, Dh}) ->
+adjust(I, {H, N, Nh, Dh} = State) ->
     Ni = ?E(I, N),
     D  = ?E(I, Nh) - Ni,
     case should_adjust(D, I, Ni, N) of
@@ -108,7 +111,7 @@ adjust(I, {H, N, Nh, Dh}) ->
                     end,
             {setelement(I, H, NewHi), setelement(I, N, Ni + Sign), Nh, Dh};
         false ->
-            {H, N, Nh, Dh}
+            State
     end.
 
 sign(D) when D >= 0 ->  1;
