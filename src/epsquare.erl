@@ -74,14 +74,10 @@ calc([V1, V2, V3, V4, V5|R], P) ->
 bump_nh({N1, N2, N3, N4, N5}, {D1, D2, D3, D4, D5}) ->
     {N1 + D1, N2 + D2, N3 + D3, N4 + D4, N5 + D5}.
 
-bump_n(2, {N1, N2, N3, N4, N5}) ->
-    bump_n(3, {N1, N2 + 1, N3, N4, N5});
-bump_n(3, {N1, N2, N3, N4, N5}) ->
-    bump_n(4, {N1, N2, N3 + 1, N4, N5});
-bump_n(4, {N1, N2, N3, N4, N5}) ->
-    bump_n(5, {N1, N2, N3, N4 + 1, N5});
-bump_n(5, {N1, N2, N3, N4, N5}) ->
-    {N1, N2, N3, N4, N5 + 1}.
+bump_n(2, {N1, N2, N3, N4, N5}) -> {N1, N2 + 1, N3 + 1, N4 + 1, N5 + 1};
+bump_n(3, {N1, N2, N3, N4, N5}) -> {N1, N2,     N3 + 1, N4 + 1, N5 + 1};
+bump_n(4, {N1, N2, N3, N4, N5}) -> {N1, N2,     N3,     N4 + 1, N5 + 1};
+bump_n(5, {N1, N2, N3, N4, N5}) -> {N1, N2,     N3,     N4,     N5 + 1}.
 
 fit(V, { V1, V2, V3, V4, V5}) when V < V1 -> {2, { V, V2, V3, V4, V5}};
 fit(V, { V1, V2, V3, V4, V5}) when V > V5 -> {5, {V1, V2, V3, V4,  V}};
@@ -100,26 +96,20 @@ adjust(I, {H, N, Nh, Dh} = State) ->
     Ni = ?E(I, N),
     D  = ?E(I, Nh) - Ni,
     case should_adjust(D, I, Ni, N) of
-        true ->
-            Sign = sign(D),
-            P    = parabolic(Sign, I, H, N),
-            NewHi = case P of
+        0    -> State;
+        Sign ->
+            NewHi = case parabolic(Sign, I, H, N) of
                         P when ?E(I - 1, H) < P, P < ?E(I + 1, H) ->
                             P;
-                        P ->
+                        _ ->
                             linear(Sign, I, H, N)
                     end,
-            {setelement(I, H, NewHi), setelement(I, N, Ni + Sign), Nh, Dh};
-        false ->
-            State
+            {setelement(I, H, NewHi), setelement(I, N, Ni + Sign), Nh, Dh}
     end.
 
-sign(D) when D >= 0 ->  1;
-sign(_)             -> -1.
-
-should_adjust(D, I, Ni, N) when D >=  1, ?E(I + 1, N) - Ni >  1 -> true;
-should_adjust(D, I, Ni, N) when D =< -1, ?E(I - 1, N) - Ni < -1 -> true;
-should_adjust(_, _,  _, _)                                      -> false.
+should_adjust(D, I, Ni, N) when D >=  1, ?E(I + 1, N) - Ni >  1 ->  1;
+should_adjust(D, I, Ni, N) when D =< -1, ?E(I - 1, N) - Ni < -1 -> -1;
+should_adjust(_, _,  _, _)                                      ->  0.
 
 linear(D, I, H, N) ->
     Hi = ?E(I,     H),
