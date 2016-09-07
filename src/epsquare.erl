@@ -37,7 +37,7 @@
 
 %% @doc Initialize state with 5 observations
 %%
--spec init([number()], float()) -> state().
+-spec init([number()], [float()] | float()) -> state().
 init([_, _, _, _, _] = Values, [P1, P2, P3])
   when 1 > P3, P3 > P2, P2 > P1, P1 > 0 ->
     [V1, V2, V3, V4, V5] = lists:sort(Values),
@@ -67,7 +67,7 @@ update(V, {H, N, Nh, Dh}) ->
 
 %% @doc Calculate percentile value for given observations
 %%
--spec calc([number()], float()) -> number().
+-spec calc([number()], [float()] | float()) -> [{float(), number()}].
 calc([V1, V2, V3, V4, V5|R], P) ->
     perc(lists:foldl(fun update/2, init([V1, V2, V3, V4, V5], P), R)).
 
